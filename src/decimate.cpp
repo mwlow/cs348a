@@ -176,8 +176,8 @@ float priority(Mesh &mesh, Mesh::HalfedgeHandle _heh) {
    Mesh::VertexHandle v_start_h = mesh.to_vertex_handle(o_heh);
    Mesh::VertexHandle v_end_h = mesh.to_vertex_handle(_heh);
    Quadricd Q = quadric(mesh, v_start_h);
-   Q += quadric(mesh, v_end_h); 
-    
+   Q += quadric(mesh, v_end_h);
+
    return Q(mesh.point(v_end_h));
 }
 
@@ -235,6 +235,19 @@ void decimate(Mesh &mesh, unsigned int _n_vertices) {
     //   2) collapse this halfedge
     //   3) update queue
     // --------------------------------------------------------------------------------------------------------------
+
+        Mesh::VertexHandle first = *(queue.begin());
+        queue.erase(queue.begin());
+
+        if (is_collapse_legal(mesh, target(mesh, first))) {
+            mesh.collapse(target(mesh, first));
+
+            Mesh::VertexHandle t = mesh.to_vertex_handle(target(mesh, first));
+            enqueue_vertex(mesh, t);
+            for (Mesh::VertexVertexIter vv_it = mesh.vv_iter(t); vv_it; ++vv_it) {
+                enqueue_vertex(mesh, vv_it.handle());
+            }
+        }
 
 
 
