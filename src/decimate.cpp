@@ -73,6 +73,33 @@ void simplify(Mesh &mesh, float percentage) {
     std::cout << "Simplifying to #vertices: " << mesh.n_vertices() << std::endl;
 }
 
+void
+update_quadric(Mesh& mesh, Mesh::VertexHandle v_h){
+      quadric(mesh, v_h).clear();
+      for (Mesh::VertexFaceIter vf_it = mesh.vf_iter(v_h); vf_it; ++vf_it) {
+            
+              Mesh::FaceVertexIter fv_it = mesh.fv_iter(vf_it.handle());    
+            Vec3f p0 = mesh.point(fv_it.handle());
+            Vec3f p1 = mesh.point((++fv_it).handle());
+            Vec3f p2 = mesh.point((++fv_it).handle());
+
+            double ax = p0[0], ay = p0[1], az = p0[2];
+            double bx = p1[0], by = p1[1], bz = p1[2];
+            double cx = p2[0], cy = p2[1], cz = p2[2];
+            
+            Vector3d AB(bx-ax, by-ay, bz-az);
+            Vector3d AC(cx-ax, cy-ay, cz-az);
+            Vector3d N = AB.cross(AC);
+            Vector4d q(      
+                  ((by-ay)*(cz-az))-((cy-ay)*(bz-az))
+                , ((bz-az)*(cx-ax))-((cz-az)*(bx-ax))
+                , ((bx-ax)*(cy-ay))-((cx-ax)*(by-ay))
+                , (-1)*((N[0]*ax)+(N[1]*ay)+(N[2]*az))
+              );
+            q.normalize();
+            quadric(mesh, v_h) += Quadricd(q[0], q[1], q[2], q[3]);
+        }
+}
 void initDecimation(Mesh &mesh) {
     // compute face normals
     mesh.update_face_normals();
@@ -85,31 +112,13 @@ void initDecimation(Mesh &mesh) {
 
     for (v_it = mesh.vertices_begin(); v_it != v_end; ++v_it) {
         priority(mesh, v_it) = -1.0;
-        quadric(mesh, v_it).clear();
         sum = 0;                            // Reset for each iteration
 
         // INSERT CODE HERE FOR PART 1-------------------------------------------------------------------------------
         // calc vertex quadrics from incident triangles
 
-        for (Mesh::VertexFaceIter vf_it = mesh.vf_iter(v_it.handle()); vf_it; ++vf_it) {
-            Mesh::FaceVertexIter fv_it = mesh.fv_iter(vf_it.handle());
-            Vec3f p0 = mesh.point(fv_it.handle());
-            Vec3f p1 = mesh.point((++fv_it).handle());
-            Vec3f p2 = mesh.point((++fv_it).handle());
-
-            float ax = p0[0], ay = p0[1], az = p0[2];
-            float bx = p1[0], by = p1[1], bz = p1[2];
-            float cx = p2[0], cy = p2[1], cz = p2[2];
-
-            quadric(mesh, v_it) += Quadricd(
-                ((by-ay)*(cz-az))-((cy-ay)*(bz-az))
-                , ((bz-az)*(cx-ax))-((cz-az)*(bx-ax))
-                , ((bx-ax)*(cy-ay))-((cx-ax)*(by-ay))
-                , (-1)*((a*ax)+(b*ay)+(c*az))
-            );
-
-
-        }
+        
+         update_quadric(mesh, v_it.handle());
 
         // ----------------------------------------------------------------------------------------------------------
     }
@@ -172,13 +181,12 @@ float priority(Mesh &mesh, Mesh::HalfedgeHandle _heh) {
     // return priority: the smaller the better
     // use quadrics to estimate approximation error
     // -------------------------------------------------------------------------------------------------------------
-   Mesh::HalfedgeHandle o_heh = mesh.opposite_halfedge_handle(_heh);
-   Mesh::VertexHandle v_start_h = mesh.to_vertex_handle(o_heh);
-   Mesh::VertexHandle v_end_h = mesh.to_vertex_handle(_heh);
-   Quadricd Q = quadric(mesh, v_start_h);
-   Q += quadric(mesh, v_end_h);
+   Mesh::VertexHandle v_from_h = mesh.from_vertex_handle(_heh);
+   Mesh::VertexHandle v_to_h = mesh.to_vertex_handle(_heh);
+   Quadricd Q = quadric(mesh, v_from_h);
+   Q += quadric(mesh, v_to_h);
 
-   return Q(mesh.point(v_end_h));
+   return Q(mesh.point(v_to_h));
 }
 
 void enqueue_vertex(Mesh &mesh, Mesh::VertexHandle _vh) {
@@ -228,28 +236,31 @@ void decimate(Mesh &mesh, unsigned int _n_vertices) {
     for (; v_it != v_end; ++v_it)
         enqueue_vertex(mesh, v_it.handle());
 
-
     // INSERT CODE HERE FOR PART 3-----------------------------------------------------------------------------------
     // Decimate using priority queue:
     //   1) take 1st element of queue
     //   2) collapse this halfedge
     //   3) update queue
     // --------------------------------------------------------------------------------------------------------------
-
-        Mesh::VertexHandle first = *(queue.begin());
-        queue.erase(queue.begin());
-
-        if (is_collapse_legal(mesh, target(mesh, first))) {
-            mesh.collapse(target(mesh, first));
-
-            Mesh::VertexHandle t = mesh.to_vertex_handle(target(mesh, first));
-            enqueue_vertex(mesh, t);
-            for (Mesh::VertexVertexIter vv_it = mesh.vv_iter(t); vv_it; ++vv_it) {
-                enqueue_vertex(mesh, vv_it.handle());
-            }
+    while(nv > _n_vertices){
+        from = *(queue.begin());
+        queue.erase(from);
+        hh = target(mesh, from);
+        if (is_collapse_legal(mesh, hh)) {
+            	to = mesh.to_vertex_handle(hh);
+            	mesh.collapse(hh);
+                nv--;
+                update_quadric(mesh, to);
+            	for (vv_it = mesh.vv_iter(to); vv_it; ++vv_it) {
+                update_quadric(mesh, vv_it.handle());       
+            	}
+                
+            	enqueue_vertex(mesh, to);
+         	for(vv_it = mesh.vv_iter(to); vv_it; ++vv_it){
+                 enqueue_vertex(mesh, vv_it.handle());
+         }
         }
-
-
+     }
 
     // clean up after decimation
     queue.clear();

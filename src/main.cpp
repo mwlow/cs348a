@@ -46,6 +46,20 @@ void renderMesh() {
 	glEnable(GL_NORMALIZE);
 	
 	// WRITE CODE HERE TO RENDER THE TRIANGLES OF THE MESH ---------------------------------------------------------
+for (Mesh::FaceIter f_it=mesh.faces_begin(); f_it!=mesh.faces_end(); ++f_it){
+        OpenMesh::Vec3f pointA, pointB, pointC;
+        Mesh::ConstFaceVertexIter cfv_it;
+        cfv_it = mesh.cfv_iter(f_it.handle());
+        pointA = mesh.point(cfv_it.handle());
+        pointB = mesh.point((++cfv_it).handle());
+        pointC = mesh.point((++cfv_it).handle());
+        glBegin(GL_TRIANGLES);
+        glVertex3f(pointA[0], pointA[1], pointA[2]);
+        glVertex3f(pointB[0], pointB[1], pointB[2]);
+        glVertex3f(pointC[0], pointC[1], pointC[2]);
+        glEnd();
+}	
+
 	// -------------------------------------------------------------------------------------------------------------
 	
 	if (!showSurface) glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
@@ -218,10 +232,12 @@ int main(int argc, char** argv) {
 	cout << '\t' << mesh.n_edges() << " edges.\n";
 	cout << '\t' << mesh.n_faces() << " faces.\n";
 	
-	//simplify(mesh,.5f);
+	simplify(mesh,.5f);
 	
 	mesh.update_normals();
 	
+        cout << "Writing to file "<<"homer-05.off"<<"..\n";
+        IO::write_mesh(mesh, "homer-05.off", opt);
 	mesh.add_property(viewCurvature);
 	mesh.add_property(viewCurvatureDerivative);
 	mesh.add_property(curvature);
