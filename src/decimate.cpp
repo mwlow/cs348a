@@ -185,8 +185,8 @@ float priority(Mesh &mesh, Mesh::HalfedgeHandle _heh) {
    Mesh::VertexHandle v_to_h = mesh.to_vertex_handle(_heh);
    Quadricd Q = quadric(mesh, v_from_h);
    Q += quadric(mesh, v_to_h);
-
-   return Q(mesh.point(v_to_h));
+   
+   return Q((mesh.point(v_to_h)+mesh.point(v_from_h))/2.0);
 }
 
 void enqueue_vertex(Mesh &mesh, Mesh::VertexHandle _vh) {

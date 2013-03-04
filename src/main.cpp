@@ -232,12 +232,12 @@ int main(int argc, char** argv) {
 	cout << '\t' << mesh.n_edges() << " edges.\n";
 	cout << '\t' << mesh.n_faces() << " faces.\n";
 	
-	simplify(mesh,.5f);
+	simplify(mesh,.1f);
 	
 	mesh.update_normals();
 	
-        cout << "Writing to file "<<"homer-05.off"<<"..\n";
-        IO::write_mesh(mesh, "homer-05.off", opt);
+        cout << "Writing to file "<<"homer-01.off"<<"..\n";
+        IO::write_mesh(mesh, "homer-01.off", opt);
 	mesh.add_property(viewCurvature);
 	mesh.add_property(viewCurvatureDerivative);
 	mesh.add_property(curvature);
