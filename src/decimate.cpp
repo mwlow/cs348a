@@ -172,8 +172,13 @@ float priority(Mesh &mesh, Mesh::HalfedgeHandle _heh) {
     // return priority: the smaller the better
     // use quadrics to estimate approximation error
     // -------------------------------------------------------------------------------------------------------------
-
-   return 1.0;
+   Mesh::HalfedgeHandle o_heh = mesh.opposite_halfedge_handle(_heh);
+   Mesh::VertexHandle v_start_h = mesh.to_vertex_handle(o_heh);
+   Mesh::VertexHandle v_end_h = mesh.to_vertex_handle(_heh);
+   Quadricd Q = quadric(mesh, v_start_h);
+   Q += quadric(mesh, v_end_h); 
+    
+   return Q(mesh.point(v_end_h));
 }
 
 void enqueue_vertex(Mesh &mesh, Mesh::VertexHandle _vh) {
