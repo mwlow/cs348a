@@ -87,7 +87,8 @@ for (Mesh::FaceIter f_it=mesh.faces_begin(); f_it!=mesh.faces_end(); ++f_it){
 	
 	if (showCurvature) {
 		// WRITE CODE HERE TO RENDER THE PRINCIPAL DIRECTIONS YOU COMPUTED ---------------------------------------------
-		// -------------------------------------------------------------------------------------------------------------
+	
+ 	// -------------------------------------------------------------------------------------------------------------
 	}
 	
 	if (showNormals) {
@@ -232,12 +233,12 @@ int main(int argc, char** argv) {
 	cout << '\t' << mesh.n_edges() << " edges.\n";
 	cout << '\t' << mesh.n_faces() << " faces.\n";
 	
-	simplify(mesh,.5f);
+	//simplify(mesh,.5f);
 	
 	mesh.update_normals();
 	
-        cout << "Writing to file "<<"homer-05.off"<<"..\n";
-        IO::write_mesh(mesh, "homer-05.off", opt);
+        /*cout << "Writing to file "<<"homer-05.off"<<"..\n";
+        IO::write_mesh(mesh, "homer-05.off", opt);*/
 	mesh.add_property(viewCurvature);
 	mesh.add_property(viewCurvatureDerivative);
 	mesh.add_property(curvature);
@@ -261,6 +262,10 @@ int main(int argc, char** argv) {
 	Vec3f actualCamPos(cameraPos[0]+pan[0],cameraPos[1]+pan[1],cameraPos[2]+pan[2]);
 	computeViewCurvature(mesh,actualCamPos,curvature,viewCurvature,viewCurvatureDerivative);
 
+                for(Mesh::VertexIter v_it = mesh.vertices_begin(); v_it!= mesh.vertices_end(); ++ v_it){
+			CurvatureInfo info = mesh.property(curvature, v_it);
+			std::cout<<info.curvatures[0]<<" "<<info.curvatures[1]<<std::endl;
+}
 	glutInit(&argc, argv); 
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH); 
 	glutInitWindowSize(windowWidth, windowHeight); 
