@@ -85,7 +85,7 @@ void computeViewCurvature(Mesh &mesh, OpenMesh::Vec3f camPos, OpenMesh::VPropHan
 		Vector3d w = _v - _v.dot(N)*_v;
                 double cos_theta = w.dot(_T1)/w.norm();
 		double kw = info.curvatures[0] * cos_theta * cos_theta + info.curvatures[1] * (1.0 - cos_theta * cos_theta);
-		mesh.property(viewCurvature, v_it) = kw;
+		mesh.property(viewCurvature, v_it.handle()) = kw;
 	}
 	// -------------------------------------------------------------------------------------------------------------
 

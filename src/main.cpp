@@ -34,6 +34,54 @@ void renderSuggestiveContours(Vec3f actualCamPos) { // use this camera position 
 	
 	// RENDER SUGGESTIVE CONTOURS HERE -----------------------------------------------------------------------------
 	// -------------------------------------------------------------------------------------------------------------
+       for (Mesh::FaceIter it = mesh.faces_begin(); it != mesh.faces_end(); ++it) {
+		double kw[3];
+		Vec3f p[3];
+		Vec3f end_point[2];
+
+		Mesh::ConstFaceVertexIter fvIt = mesh.cfv_iter(it);
+		for (int i=0; i<3; i++) {
+			p[i] = mesh.point(fvIt.handle());
+			kw[i] = mesh.property(viewCurvature, fvIt.handle());
+			++fvIt;
+		}
+		if(kw[0]*kw[1]>=0 && kw[1]*kw[2]>=0)
+			continue;
+		if(kw[0] < kw[1]){
+	        	double temp = kw[0];
+			kw[0] = kw[1];
+			kw[1] = temp;
+		}
+		if(kw[1] < kw[2]){
+			if(kw[2] <= kw[0]){
+				double temp = kw[1];
+				kw[1] = kw[2];
+				kw[2] = temp;
+			}
+			else{
+				double temp = kw[2]; 
+				kw[2] = kw[1];
+				kw[1] = kw[0];
+                                kw[0] = temp;
+			}
+		}
+		if(kw[1] > 0){//0-2, 1-2
+			double t0 = kw[2]/(kw[2]-kw[0]);
+			double t1 = kw[2]/(kw[2]-kw[1]);
+			end_point[0] = p[0] * t0 + p[2] * (1.0 - t0);
+			end_point[1] = p[1] * t1 + p[2] * (1.0 - t1);
+		}
+		else{//0-1, 0-2
+			double t0 = kw[1]/(kw[1]-kw[0]);
+			double t1 = kw[2]/(kw[2]-kw[0]);
+			end_point[0] = p[0]* t0 + p[1] * (1.0 - t0);
+			end_point[1] = p[0] * t1  + p[2] * (1.0 - t1);
+		}
+		glBegin(GL_LINES);
+		glVertex3f(end_point[0][0], end_point[0][1], end_point[0][2]);
+	        glVertex3f(end_point[1][0], end_point[1][1], end_point[1][2]);
+		glEnd();
+      }
 }
 
 void renderMesh() {
@@ -263,8 +311,7 @@ int main(int argc, char** argv) {
 	computeViewCurvature(mesh,actualCamPos,curvature,viewCurvature,viewCurvatureDerivative);
 
                 for(Mesh::VertexIter v_it = mesh.vertices_begin(); v_it!= mesh.vertices_end(); ++ v_it){
-			CurvatureInfo info = mesh.property(curvature, v_it);
-			std::cout<<info.curvatures[0]<<" "<<info.curvatures[1]<<std::endl;
+			std::cout<<mesh.property(viewCurvature, v_it)<<std::endl;
 }
 	glutInit(&argc, argv); 
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH); 
