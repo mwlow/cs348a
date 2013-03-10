@@ -19,6 +19,9 @@ FPropHandleT<Vec3f> viewCurvatureDerivative;
 VPropHandleT<CurvatureInfo> curvature;
 Mesh mesh;
 
+double DWKW_THRESHOLD = 10;
+double ANGLE_THRESHOLD = 0.1;
+
 bool leftDown = false, rightDown = false, middleDown = false;
 int lastPos[2];
 float cameraPos[4] = {0,0,4,1};
@@ -35,7 +38,8 @@ void renderSuggestiveContours(Vec3f actualCamPos) { // use this camera position 
 	// RENDER SUGGESTIVE CONTOURS HERE -----------------------------------------------------------------------------
 	// -------------------------------------------------------------------------------------------------------------
        for (Mesh::FaceIter it = mesh.faces_begin(); it != mesh.faces_end(); ++it) {
-		double kw[3];
+	
+          	double kw[3];
 		Vec3f p[3];
 		Vec3f end_point[2];
 
@@ -47,6 +51,24 @@ void renderSuggestiveContours(Vec3f actualCamPos) { // use this camera position 
 		}
 		if(kw[0]*kw[1]>=0 && kw[1]*kw[2]>=0)
 			continue;
+		//Calculate a representative w
+		Vec3f c = (p[0] + p[1] + p[2])/3.0;
+	        Vector3d e1(p[1][0] - p[0][0], p[1][1] - p[0][1], p[1][2] - p[0][2]);
+		Vector3d e2(p[2][0] - p[0][0], p[2][1] - p[0][1], p[2][2] - p[0][2]);
+		Vector3d N = e1.cross(e2);
+		N.normalize();
+		Vec3f v = actualCamPos - c;
+		Vector3d _v(v[0], v[1], v[2]);
+		Vector3d w = _v - _v.dot(N)*_v;
+		w.normalize();
+		//Calculate DwKw
+	        Vec3f Dw = mesh.property(viewCurvatureDerivative, it);
+		Vector3d _Dw(Dw[0], Dw[1], Dw[2]);
+		double DwKw = _Dw.dot(w);
+		//Calculate the angle between surface normal and view vector
+		double cos_theta = N.dot(w);
+		if(DwKw < DWKW_THRESHOLD || (cos_theta>0 && cos_theta < ANGLE_THRESHOLD))			continue;
+		//render	
 		if(kw[0] < kw[1]){
 	        	double temp = kw[0];
 			kw[0] = kw[1];
@@ -248,6 +270,8 @@ void keyboard(unsigned char key, int x, int y) {
 	else if (key == 'n' || key == 'N') showNormals = !showNormals;
 	else if (key == 'w' || key == 'W') writeImage(mesh, windowWidth, windowHeight, "renderedImage.svg", actualCamPos);
 	else if (key == 'q' || key == 'Q') exit(0);
+	else if (key == 'd' || key == 'D') DWKW_THRESHOLD += 1;
+	else if (key == 't' || key == 'T') ANGLE_THRESHOLD += 0.1;
 	glutPostRedisplay();
 }
 
