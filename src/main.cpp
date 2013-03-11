@@ -69,42 +69,15 @@ void renderSuggestiveContours(Vec3f actualCamPos) { // use this camera position 
         if(DwKw < DWKW_THRESHOLD || (theta < ANGLE_THRESHOLD))
             continue;
 
-        if (kw[0] * kw[1] < 0) {
+        end_point[0] = (kw[0] * kw[1] < 0) ?
+            p[0] + (p[1] - p[0]) * -kw[0]/(kw[1] - kw[0]) :
+            p[0] + (p[2] - p[0]) * -kw[0]/(kw[2] - kw[0]) ;
 
-        }
-        //render
-        /*if(kw[0] < kw[1]){
+        end_point[1] = (kw[1] * kw[2] < 0) ?
+            p[1] + (p[2] - p[1]) * -kw[1]/(kw[2] - kw[1]) :
+            p[0] + (p[2] - p[0]) * -kw[0]/(kw[2] - kw[0]) ;
 
-            double temp = kw[0];
-            kw[0] = kw[1];
-            kw[1] = temp;
-        }
-        if(kw[1] < kw[2]){
-            if(kw[2] <= kw[0]){
-                double temp = kw[1];
-                kw[1] = kw[2];
-                kw[2] = temp;
-            }
-            else{
-                double temp = kw[2];
-                kw[2] = kw[1];
-                kw[1] = kw[0];
-                kw[0] = temp;
-            }
-        }
-        if(kw[1] > 0){//0-2, 1-2
-            double t0 = kw[2]/(kw[2]-kw[0]);
-            double t1 = kw[2]/(kw[2]-kw[1]);
-            end_point[0] = p[0] * t0 + p[2] * (1.0 - t0);
-            end_point[1] = p[1] * t1 + p[2] * (1.0 - t1);
-        }
-        else{//0-1, 0-2
-            double t0 = kw[1]/(kw[1]-kw[0]);
-            double t1 = kw[2]/(kw[2]-kw[0]);
-            end_point[0] = p[0]* t0 + p[1] * (1.0 - t0);
-            end_point[1] = p[0] * t1  + p[2] * (1.0 - t1);
-        }
-        */
+
         glBegin(GL_LINES);
         glVertex3f(end_point[0][0], end_point[0][1], end_point[0][2]);
         glVertex3f(end_point[1][0], end_point[1][1], end_point[1][2]);
