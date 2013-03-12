@@ -10,6 +10,7 @@
 #include "mesh_features.h"
 #include "image_generation.h"
 #include "decimate.h"
+#include "bezier.h"
 using namespace std;
 using namespace OpenMesh;
 using namespace Eigen;
@@ -19,9 +20,9 @@ FPropHandleT<Vec3f> viewCurvatureDerivative;
 VPropHandleT<CurvatureInfo> curvature;
 Mesh mesh;
 
-double DWKW_THRESHOLD = 10;
+double DWKW_THRESHOLD = 30;
 double ANGLE_THRESHOLD = 0.1;
-
+bool showBezier = true, light = false, showSuggestiveContour = false;
 bool leftDown = false, rightDown = false, middleDown = false;
 int lastPos[2];
 float cameraPos[4] = {0,0,4,1};
@@ -33,7 +34,7 @@ float specular[] = { 1.0, 1.0, 1.0, 1.0 };
 float shininess[] = { 50.0 };
 
 void renderSuggestiveContours(Vec3f actualCamPos) { // use this camera position to account for panning etc.
-    glColor3f(0,0,1);
+    glColor3f(1,0,0);
 
     // RENDER SUGGESTIVE CONTOURS HERE -----------------------------------------------------------------------------
     // -------------------------------------------------------------------------------------------------------------
@@ -90,32 +91,56 @@ void renderMesh() {
 
     glEnable(GL_LIGHTING);
     glLightfv(GL_LIGHT0, GL_POSITION, cameraPos);
-
+    
     glDepthRange(0.001,1);
     glEnable(GL_NORMALIZE);
 
+    if(!light){
+       glDisable(GL_LIGHTING);
+       glDepthRange(0, 0.999);
+     }
     // WRITE CODE HERE TO RENDER THE TRIANGLES OF THE MESH ---------------------------------------------------------
     for (Mesh::FaceIter f_it=mesh.faces_begin(); f_it!=mesh.faces_end(); ++f_it){
-        OpenMesh::Vec3f pointA, pointB, pointC, normalA, normalB, normalC;
+        OpenMesh::Vec3f point[3], normal[3];
         Mesh::ConstFaceVertexIter cfv_it;
         cfv_it = mesh.cfv_iter(f_it.handle());
-        pointA = mesh.point(cfv_it.handle());
-        normalA = mesh.normal(cfv_it.handle());
-        pointB = mesh.point((++cfv_it).handle());
-        normalB = mesh.normal(cfv_it.handle());
-        pointC = mesh.point((++cfv_it).handle());
-        normalC = mesh.normal(cfv_it.handle());
-
+        point[2] = mesh.point(cfv_it.handle());
+        normal[2] = mesh.normal(cfv_it.handle());
+        point[1] = mesh.point((++cfv_it).handle());
+        normal[1] = mesh.normal(cfv_it.handle());
+        point[0] = mesh.point((++cfv_it).handle());
+        normal[0] = mesh.normal(cfv_it.handle());
+        
+        if(showBezier){
+              glColor3f(0,0,0);
+              glBegin(GL_LINE_STRIP);
+              glVertex3f(point[0][0], point[0][1], point[0][2]);
+	      glVertex3f(point[1][0], point[1][1], point[1][2]);
+	      glVertex3f(point[2][0], point[2][1], point[2][2]);
+              glEnd();
+ 
+              std::vector<Vec3f> points; 
+	      bezier(point, points);
+              //holy(point, points);
+	      glColor3f(1,0,0);      
+	      glBegin(GL_LINE_STRIP);
+	      for (std::vector<Vec3f>::iterator it = points.begin(); it != points.end(); ++it) {
+	         glVertex3f((*it)[0], (*it)[1], (*it)[2]);	
+              }
+	      glEnd();
+              glColor3f(0.2, 0.2, 0.2);
+	}
         glBegin(GL_TRIANGLES);
-        glNormal3f(normalA[0], normalA[1], normalA[2]);
-        glVertex3f(pointA[0], pointA[1], pointA[2]);
-        glNormal3f(normalB[0], normalB[1], normalB[2]);
-        glVertex3f(pointB[0], pointB[1], pointB[2]);
-        glNormal3f(normalC[0], normalC[1], normalC[2]);
-        glVertex3f(pointC[0], pointC[1], pointC[2]);
+        glNormal3f(normal[0][0], normal[0][1], normal[0][2]);
+        glVertex3f(point[0][0], point[0][1], point[0][2]);
+        glNormal3f(normal[1][0], normal[1][1], normal[1][2]);
+        glVertex3f(point[1][0], point[1][1], point[1][2]);
+        glNormal3f(normal[2][0], normal[2][1], normal[2][2]);
+        glVertex3f(point[2][0], point[2][1], point[2][2]);
         glEnd();
-    }
 
+        
+    }
     // -------------------------------------------------------------------------------------------------------------
 
     if (!showSurface) glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
@@ -124,8 +149,9 @@ void renderMesh() {
     glDepthRange(0,0.999);
 
     Vec3f actualCamPos(cameraPos[0]+pan[0],cameraPos[1]+pan[1],cameraPos[2]+pan[2]);
+    if(showSuggestiveContour){
     renderSuggestiveContours(actualCamPos);
-
+    }
     // We'll be nice and provide you with code to render feature edges below
     glBegin(GL_LINES);
     glColor3f(1,0,0);
@@ -275,6 +301,9 @@ void keyboard(unsigned char key, int x, int y) {
     else if (key == 'q' || key == 'Q') exit(0);
     else if (key == 'd' || key == 'D') DWKW_THRESHOLD += 1;
     else if (key == 't' || key == 'T') ANGLE_THRESHOLD += 0.1;
+    else if (key == 'l' || key == 'L') light = !light;
+    else if (key == 'b' || key == 'B') showBezier = !showBezier;
+    else if (key == 'u' || key == 'u') showSuggestiveContour = !showSuggestiveContour;
     glutPostRedisplay();
 }
 
@@ -337,9 +366,9 @@ int main(int argc, char** argv) {
     Vec3f actualCamPos(cameraPos[0]+pan[0],cameraPos[1]+pan[1],cameraPos[2]+pan[2]);
     computeViewCurvature(mesh,actualCamPos,curvature,viewCurvature,viewCurvatureDerivative);
 
-    for(Mesh::VertexIter v_it = mesh.vertices_begin(); v_it!= mesh.vertices_end(); ++ v_it){
+   /* for(Mesh::VertexIter v_it = mesh.vertices_begin(); v_it!= mesh.vertices_end(); ++ v_it){
         std::cout<<mesh.property(viewCurvature, v_it)<<std::endl;
-    }
+    }*/
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(windowWidth, windowHeight);
