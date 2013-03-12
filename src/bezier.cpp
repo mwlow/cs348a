@@ -91,6 +91,19 @@ void holy(Vec3f p[3], vector<Vec3f>& points, Vec3f n) {
             glVertex3f((*curr)[0], (*curr)[1], (*curr)[2]);
             glVertex3f((*next)[0], (*next)[1], (*next)[2]);
             glEnd();
+/*
+            if (curr + 1 == min) {
+                glBegin(GL_TRIANGLES);
+                //anticlockwise ordering here
+                //TODO: specify normals per vertex
+                glColor3f(1, 0, 0);
+                glNormal3f(n[0], n[1], n[2]);
+                glVertex3f((*curr_vertex)[0], (*curr_vertex)[1], (*curr_vertex)[2]);
+                glVertex3f((*curr)[0], (*curr)[1], (*curr)[2]);
+                glVertex3f((*next_vertex)[0], (*next_vertex)[1], (*next_vertex)[2]);
+                glEnd();
+            }
+            */
         }
         else {
             glBegin(GL_TRIANGLES);

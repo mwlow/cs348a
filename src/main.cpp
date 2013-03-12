@@ -104,12 +104,29 @@ void renderMesh() {
         OpenMesh::Vec3f point[3], normal[3];
         Mesh::ConstFaceVertexIter cfv_it;
         cfv_it = mesh.cfv_iter(f_it.handle());
-        point[2] = mesh.point(cfv_it.handle());
-        normal[2] = mesh.normal(cfv_it.handle());
-        point[1] = mesh.point((++cfv_it).handle());
-        normal[1] = mesh.normal(cfv_it.handle());
-        point[0] = mesh.point((++cfv_it).handle());
-        normal[0] = mesh.normal(cfv_it.handle());
+        Vec3f p0 = mesh.point(cfv_it.handle());
+        Vec3f n0 = mesh.normal(cfv_it.handle());
+        Vec3f p1 = mesh.point((++cfv_it).handle());
+        Vec3f n1 = mesh.normal(cfv_it.handle());
+        Vec3f p2 = mesh.point((++cfv_it).handle());
+        Vec3f n2 = mesh.normal(cfv_it.handle());
+
+        if (((p1 - p0) % (p2 - p0))[2] < 0) {
+            point[0] = p0;
+            point[1] = p1;
+            point[2] = p2;
+            normal[0] = n0;
+            normal[1] = n1;
+            normal[2] = n2;
+        }
+        else {
+            point[2] = p0;
+            point[1] = p1;
+            point[0] = p2;
+            normal[2] = n0;
+            normal[1] = n1;
+            normal[0] = n2;
+        }
 
         if(showBezier){
             //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -339,7 +356,7 @@ int main(int argc, char** argv) {
     cout << '\t' << mesh.n_edges() << " edges.\n";
     cout << '\t' << mesh.n_faces() << " faces.\n";
 
-    //simplify(mesh,.0095f);
+    simplify(mesh,.05f);
 
     mesh.update_normals();
 
