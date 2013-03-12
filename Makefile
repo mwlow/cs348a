@@ -5,7 +5,7 @@ CPPFLAGS = -O2 -fPIC -DEIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS -DEIGEN_YES_I_K
 LDFLAGS = -O2 -lGL -lGLU
 LIB = -lglut -lOpenMeshCore -lOpenMeshTools -Wl,-rpath,$(OPENMESH_LIB_DIR)
 TARGET = drawMesh
-OBJS = objs/main.o objs/curvature.o objs/mesh_features.o objs/image_generation.o objs/decimate.o
+OBJS = objs/main.o objs/curvature.o objs/mesh_features.o objs/image_generation.o objs/decimate.o objs/bezier.o
 
 default: $(OBJS)
 	$(LD) $(OBJS) $(LDFLAGS) -L$(OPENMESH_LIB_DIR) $(LIB) -o $(TARGET)
@@ -24,6 +24,10 @@ objs/image_generation.o: src/image_generation.cpp
 
 objs/decimate.o: src/decimate.cpp
 	$(CPP) -c $(CPPFLAGS) src/decimate.cpp -o objs/decimate.o $(INCLUDE)
+
+objs/bezier.o: src/bezier.cpp
+	$(CPP) -c $(CPPFLAGS) src/bezier.cpp -o objs/bezier.o $(INCLUDE)
+
 
 clean:
 	rm $(OBJS) $(TARGET) -f

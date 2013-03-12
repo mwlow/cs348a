@@ -1,6 +1,7 @@
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
 #include <iostream>
+#include <vector>
 #include "curvature.h"
 using namespace OpenMesh;
 using namespace Eigen;

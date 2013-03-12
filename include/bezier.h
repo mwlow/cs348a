@@ -7,5 +7,5 @@ void cubicBezier(OpenMesh::Vec3f p[4], std::vector<OpenMesh::Vec3f>&);
 
 void bezier(OpenMesh::Vec3f p[3], std::vector<OpenMesh::Vec3f>&);
 
-void holy(OpenMesh::Vec3f p[3], std::vector<OpenMesh::Vec3f>&);
+void holy(OpenMesh::Vec3f p[3], std::vector<OpenMesh::Vec3f>&, OpenMesh::Vec3f n);
 #endif
