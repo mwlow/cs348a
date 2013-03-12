@@ -116,7 +116,7 @@ void holy(Vec3f p[3], vector<Vec3f>& points, Vec3f n) {
             else {
                 curr_vertex = &p[0];
                 next_vertex = &p[1];
-                //break;
+                continue;
             }
         }
 
